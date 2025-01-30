@@ -1,52 +1,46 @@
-resource "aws_subnet" "private-us-east-1a" {
-  vpc_id            = aws_vpc.k8svpc.id
-  cidr_block        = "192.168.0.0/19"
-  availability_zone = "us-east-1a"
+name: EKS Cluster Setup
 
-  tags = {
-    Name                              = "private-us-east-1a"
-    "kubernetes.io/role/internal-elb" = "1"
-    "kubernetes.io/cluster/demo"      = "owned"
-  }
-}
+on:
+  push:
+    branches:
+      - master  # Trigger workflow on push to the master branch
+  pull_request:
 
-resource "aws_subnet" "private-us-east-1b" {
-  vpc_id            = aws_vpc.k8svpc.id
-  cidr_block        = "192.168.32.0/19"
-  availability_zone = "us-east-1b"
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
 
-  tags = {
-    Name                              = "private-us-east-1b"
-    "kubernetes.io/role/internal-elb" = "1"
-    "kubernetes.io/cluster/demo"      = "owned"
-  }
-}
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-# public subnet 01
+      # Step 2: Set up Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
 
-resource "aws_subnet" "public-us-east-1a" {
-  vpc_id                  = aws_vpc.k8svpc.id
-  cidr_block              = "192.168.64.0/19"
-  availability_zone       = "us-east-1a"
-  map_public_ip_on_launch = true
+      # Step 3: Configure AWS credentials (replace with your secrets)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2  # Replace with your region
 
-  tags = {
-    Name                         = "public-us-east-1a"
-    "kubernetes.io/role/elb"     = "1" #this instruct the kubernetes to create public load balancer in these subnets
-    "kubernetes.io/cluster/demo" = "owned"
-  }
-}
-# public subnet 02
+      # Step 4: Initialize Terraform
+      - name: Terraform Init
+        run: terraform init
 
-resource "aws_subnet" "public-us-east-1b" {
-  vpc_id                  = aws_vpc.k8svpc.id
-  cidr_block              = "192.168.96.0/19"
-  availability_zone       = "us-east-1b"
-  map_public_ip_on_launch = true
+      # Step 5: Validate Terraform
+      - name: Terraform Validate
+        run: terraform validate
 
-  tags = {
-    Name                         = "public-us-east-1b"
-    "kubernetes.io/role/elb"     = "1" #this instruct the kubernetes to create public load balancer in these subnets
-    "kubernetes.io/cluster/demo" = "owned"
-  }
-}
+      # Step 6: Terraform Plan
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      # Step 7: Apply Terraform (Optional, comment this out for testing)
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
