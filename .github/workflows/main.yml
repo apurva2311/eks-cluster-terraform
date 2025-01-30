@@ -5,6 +5,7 @@ on:
     branches:
       - master  # Trigger workflow on push to the master branch
   pull_request:
+  workflow_dispatch:  # Manually trigger from GitHub UI
 
 jobs:
   terraform:
@@ -37,10 +38,11 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
-      # Step 6: Terraform Plan
-      - name: Terraform Plan
-        run: terraform plan -out=tfplan
-
-      # Step 7: Apply Terraform (Optional, comment this out for testing)
-      - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+      # Step 6: Decide whether to apply or destroy based on the event
+      - name: Terraform Apply or Destroy
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            terraform apply -auto-approve
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            terraform destroy -auto-approve
+          fi
