@@ -1,0 +1,44 @@
+name: EKS Cluster Setup
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Check out the code
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Step 2: Set up Terraform
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: '1.3.5'  # Specify the Terraform version you need
+
+    # Step 3: Terraform initialization
+    - name: Terraform Init
+      run: terraform init
+
+    # Step 4: Terraform validation (optional, checks for syntax errors)
+    - name: Terraform Validate
+      run: terraform validate
+
+    # Step 5: Terraform plan (this will generate a plan of changes)
+    - name: Terraform Plan
+      run: terraform plan
+
+    # Step 6: Terraform Apply (this will apply the changes to create the EKS cluster)
+    - name: Terraform Apply
+      run: terraform apply -auto-approve
+
+    # Optional Step: Outputs (get any output variables from Terraform)
+    - name: Get Outputs
+      run: terraform output
