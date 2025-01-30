@@ -9,7 +9,6 @@ resource "aws_subnet" "private-us-east-1a" {
     "kubernetes.io/cluster/demo"      = "owned"
   }
 }
-# private subnet 02
 
 resource "aws_subnet" "private-us-east-1b" {
   vpc_id            = aws_vpc.k8svpc.id
