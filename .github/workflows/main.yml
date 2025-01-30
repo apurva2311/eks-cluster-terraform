@@ -36,6 +36,7 @@ jobs:
         run: terraform validate
 
       - name: Plan Terraform Changes
+      
         run: terraform plan
 
       - name: Apply Terraform Changes (on push only)
