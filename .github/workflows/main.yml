@@ -1,56 +1,55 @@
-on:
-  workflow_dispatch:
-    inputs:
-      destroy:
-        description: 'Destroy Terraform infrastructure?'
-        required: true
-        default: 'no'
+# private subnet 01
 
-jobs:
-  terraform:
-    runs-on: ubuntu-latest
-    steps:
-      # Checkout code
-      - name: Checkout code
-        uses: actions/checkout@v2
+resource "aws_subnet" "private-us-east-1a" {
+  vpc_id            = aws_vpc.k8svpc.id
+  cidr_block        = "192.168.0.0/19"
+  availability_zone = "us-east-1a"
 
-      # Set up Terraform
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: '1.0.0'
+  tags = {
+    Name                              = "private-us-east-1a"
+    "kubernetes.io/role/internal-elb" = "1"
+    "kubernetes.io/cluster/demo"      = "owned"
+  }
+}
+# private subnet 02
 
-      # Terraform Init
-      - name: Terraform Init
-        run: terraform init
+resource "aws_subnet" "private-us-east-1b" {
+  vpc_id            = aws_vpc.k8svpc.id
+  cidr_block        = "192.168.32.0/19"
+  availability_zone = "us-east-1b"
 
-      # Terraform Plan
-      - name: Terraform Plan
-        run: terraform plan
+  tags = {
+    Name                              = "private-us-east-1b"
+    "kubernetes.io/role/internal-elb" = "1"
+    "kubernetes.io/cluster/demo"      = "owned"
+  }
+}
 
-      # Terraform Apply
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
+# public subnet 01
 
-  destroy:
-    runs-on: ubuntu-latest
-    needs: terraform
-    if: ${{ github.event.inputs.destroy == 'yes' }}  # Trigger destroy manually
+resource "aws_subnet" "public-us-east-1a" {
+  vpc_id                  = aws_vpc.k8svpc.id
+  cidr_block              = "192.168.64.0/19"
+  availability_zone       = "us-east-1a"
+  map_public_ip_on_launch = true
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+  tags = {
+    Name                         = "public-us-east-1a"
+    "kubernetes.io/role/elb"     = "1" #this instruct the kubernetes to create public load balancer in these subnets
+    "kubernetes.io/cluster/demo" = "owned"
+  }
+}
+# public subnet 02
 
-      # Set up Terraform
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: '1.0.0'
+resource "aws_subnet" "public-us-east-1b" {
+  vpc_id                  = aws_vpc.k8svpc.id
+  cidr_block              = "192.168.96.0/19"
+  availability_zone       = "us-east-1b"
+  map_public_ip_on_launch = true
 
-      # Terraform Init
-      - name: Terraform Init
-        run: terraform init
-
-      # Terraform Destroy
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+  tags = {
+    Name                         = "public-us-east-1b"
+    "kubernetes.io/role/elb"     = "1" #this instruct the kubernetes to create public load balancer in these subnets
+    "kubernetes.io/cluster/demo" = "owned"
+  }
+}
